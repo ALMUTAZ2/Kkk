@@ -477,7 +477,8 @@
                     options: ["8 سنوات", "9 سنوات", "10 سنوات", "11 سنة"],
                     correct: 2
                 },
-                                {
+                
+                {
                     question: "من هو الصحابي الذي لقب بـ «أمين الأمة»؟",
                     options: ["أبو هريرة", "أبو عبيدة بن الجراح", "معاذ بن جبل", "زيد بن ثابت"],
                     correct: 1
@@ -695,11 +696,6 @@
         
         // ===== الجزء الأول: متغيرات التحكم وإعدادات المسابقة =====
 
-
-
-
-
-        
         // وضع المسابقة: "auto" للتوقيت التلقائي، "always" لتكون متاحة دائمًا، "never" لتكون غير متاحة دائمًا
         const QUIZ_MODE = "auto"; // للاختبار، يمكن تغييره إلى "auto" لاحقاً
 
@@ -775,87 +771,108 @@
             }
         }
         
-        // ===== بداية التعديلات الجديدة: تحسين نظام المشاركة اليومية =====
+        // ===== تحسين نظام المشاركة اليومية =====
         
-        // دالة للحصول على تاريخ اليوم بتنسيق YYYY-MM-DD
-        function getFormattedDate() {
+        /**
+         * الحصول على تاريخ اليوم بتنسيق موحد (DD-MM-YYYY)
+         * استخدام هذا التنسيق لتجنب مشاكل المناطق الزمنية
+         */
+        function getTodayFormatted() {
             const now = new Date();
-            return `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}-${now.getDate().toString().padStart(2, '0')}`;
+            const day = String(now.getDate()).padStart(2, '0');
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const year = now.getFullYear();
+            return `${day}-${month}-${year}`;
         }
 
-        // دالة التحقق من المشاركة اليومية المحسنة
+        /**
+         * التحقق من إعادة ضبط المشاركة اليومية
+         * إذا كان التاريخ المخزن مختلفًا عن تاريخ اليوم، يتم إعادة ضبط بيانات المشاركة
+         */
+        function checkAndResetParticipation() {
+            try {
+                const today = getTodayFormatted();
+                const storedDate = localStorage.getItem('participationDate');
+                
+                console.log("تاريخ اليوم:", today);
+                console.log("تاريخ المشاركة المخزن:", storedDate);
+                
+                if (!storedDate || storedDate !== today) {
+                    console.log("إعادة ضبط بيانات المشاركة - يوم جديد");
+                    
+                    // حفظ المشاركة السابقة في سجل المشاركات (اختياري)
+                    const previousInfo = localStorage.getItem('participationInfo');
+                    if (previousInfo) {
+                        const history = JSON.parse(localStorage.getItem('participationHistory') || '[]');
+                        history.push(JSON.parse(previousInfo));
+                        localStorage.setItem('participationHistory', JSON.stringify(history));
+                    }
+                    
+                    // مسح بيانات المشاركة الحالية
+                    localStorage.removeItem('participationDate');
+                    localStorage.removeItem('participationInfo');
+                    localStorage.removeItem('hasParticipated');
+                    
+                    return true; // تم إعادة الضبط
+                }
+                
+                return false; // لم يتم إعادة الضبط (نفس اليوم)
+            } catch (error) {
+                console.error("خطأ في التحقق من التاريخ:", error);
+                return false;
+            }
+        }
+
+        /**
+         * التحقق من المشاركة اليومية
+         * @returns {boolean} - هل المستخدم شارك بالفعل اليوم
+         */
         function checkLocalParticipation() {
             try {
-                // الحصول على تاريخ اليوم بتنسيق YYYY-MM-DD
-                const today = getFormattedDate();
+                // إعادة ضبط المشاركة إذا كان يوم جديد
+                checkAndResetParticipation();
                 
-                // الحصول على مفتاح المشاركة السابقة من التخزين المحلي
+                // التحقق من حالة المشاركة بعد إعادة الضبط المحتملة
+                const today = getTodayFormatted();
                 const participationDate = localStorage.getItem('participationDate');
                 
-                // التحقق مما إذا كانت المشاركة في نفس اليوم
+                // المستخدم شارك اليوم إذا كان التاريخ المخزن يساوي تاريخ اليوم
                 return participationDate === today;
             } catch (error) {
-                console.error('Error checking participation:', error);
+                console.error('خطأ في التحقق من المشاركة:', error);
                 // في حالة حدوث خطأ، نسمح بالمشاركة
                 return false;
             }
         }
 
-        // دالة تسجيل المشاركة اليومية المحسنة
-        function recordLocalParticipation() {
+        /**
+         * تسجيل مشاركة جديدة
+         * @param {string} playerName - اسم المشارك
+         */
+        function recordLocalParticipation(playerName) {
             try {
-                // تسجيل تاريخ المشاركة الحالي بتنسيق YYYY-MM-DD
-                const today = getFormattedDate();
+                const today = getTodayFormatted();
+                
+                // تخزين تاريخ المشاركة
                 localStorage.setItem('participationDate', today);
                 
-                // تخزين معلومات إضافية للمشاركة (اختياري)
+                // تخزين معلومات إضافية للمشاركة
                 const participationInfo = {
                     date: today,
                     timestamp: new Date().toISOString(),
-                    playerName: gameState.playerName
+                    playerName: playerName
                 };
+                
                 localStorage.setItem('participationInfo', JSON.stringify(participationInfo));
+                localStorage.setItem('hasParticipated', 'true');
                 
                 console.log('تم تسجيل المشاركة بنجاح:', today);
                 return true;
             } catch (error) {
-                console.error('Error recording participation:', error);
+                console.error('خطأ في تسجيل المشاركة:', error);
                 return false;
             }
         }
-
-        // دالة للتحقق من إعادة ضبط المشاركة يومياً
-        function checkAndResetParticipation() {
-            try {
-                const participationDate = localStorage.getItem('participationDate');
-                if (!participationDate) return; // لا توجد مشاركة سابقة
-                
-                const today = getFormattedDate();
-                if (participationDate !== today) {
-                    // تاريخ المشاركة المخزن ليس اليوم الحالي، نقوم بإعادة ضبط المشاركة
-                    console.log('إعادة ضبط المشاركة السابقة من تاريخ:', participationDate);
-                    
-                    // حفظ المشاركة السابقة في سجل المشاركات (اختياري)
-                    const previousParticipations = JSON.parse(localStorage.getItem('participationHistory') || '[]');
-                    const participationInfo = JSON.parse(localStorage.getItem('participationInfo') || '{}');
-                    
-                    if (participationInfo.date) {
-                        previousParticipations.push(participationInfo);
-                        localStorage.setItem('participationHistory', JSON.stringify(previousParticipations));
-                    }
-                    
-                    // إزالة بيانات المشاركة الحالية
-                    localStorage.removeItem('participationDate');
-                    localStorage.removeItem('participationInfo');
-                    
-                    console.log('تم إعادة ضبط المشاركة بنجاح');
-                }
-            } catch (error) {
-                console.error('Error checking/resetting participation:', error);
-            }
-        }
-        
-        // ===== نهاية التعديلات الجديدة =====
 
         // تحديث رسالة الوقت
         function updateTimeMessage() {
@@ -1051,7 +1068,7 @@
                             ${!answer.isCorrect ? `<br>الإجابة الصحيحة: ${answer.correctAnswer}` : ''}
                         </div>
                         <div class="text-sm mt-2">
-                            الوقت: ${answer.time.toFixed(2)} ثانية
+                                                        الوقت: ${answer.time.toFixed(2)} ثانية
                             <br>
                             النقاط: ${answer.points}
                         </div>
@@ -1062,7 +1079,7 @@
                 lucide.createIcons();
 
             } catch (error) {
-                                console.error('Error saving results:', error);
+                console.error('Error saving results:', error);
                 alert('حدث خطأ في حفظ النتيجة. يرجى المحاولة مرة أخرى.');
             }
         }
@@ -1080,7 +1097,15 @@
                 
                 if (quizTimeStatus.isAvailable) {
                     // المسابقة متاحة حالياً
-                    elements.startScreen.classList.remove('hidden');
+                    
+                    // التحقق من المشاركة السابقة
+                    if (checkLocalParticipation()) {
+                        // المستخدم شارك بالفعل اليوم
+                        elements.alreadyParticipatedScreen.classList.remove('hidden');
+                    } else {
+                        // المستخدم لم يشارك بعد
+                        elements.startScreen.classList.remove('hidden');
+                    }
                 } else {
                     // المسابقة غير متاحة حالياً
                     elements.outOfTimeScreen.classList.remove('hidden');
@@ -1109,13 +1134,13 @@
                 gameState.playerName = elements.playerNameInput.value.trim();
                 
                 // تسجيل المشاركة محلياً باستخدام النظام المحسن
-                recordLocalParticipation();
+                recordLocalParticipation(gameState.playerName);
                 
                 // تسجيل المشارك في Firebase للإحصائيات
                 try {
                     await db.collection('participants').add({
                         playerName: gameState.playerName,
-                        participationDate: getFormattedDate(),
+                        participationDate: getTodayFormatted(),
                         timestamp: firebase.firestore.FieldValue.serverTimestamp()
                     });
                 } catch (error) {
