@@ -689,11 +689,28 @@
             ]
         };
 
-        // الوقت المسموح للمسابقة
-        const quizStartHour = 19; // 7 مساءً
-        const quizEndHour = 20; // 8 مساءً
-        const questionTimeLimit = 10; // 10 ثواني لكل سؤال
 
+
+
+
+        
+        // الوقت المسموح للمسابقة
+const quizStartHour = 19; // 8 مساءً
+const quizStartMinute = 0; // الدقيقة 0
+const quizEndHour = 20; // 8 مساءً
+const quizEndMinute = 30; // الدقيقة 30
+const questionTimeLimit = 10; // 10 ثواني لكل سؤال
+
+
+
+
+        
+
+
+
+
+
+        
         // عناصر الصفحة
         const elements = {
             dayName: document.getElementById('day-name'),
@@ -764,19 +781,7 @@
             return dayOfRamadan;
         }
 
-        // التحقق من وقت المسابقة
-        function checkQuizTime() {
-            const now = new Date();
-            const currentHour = now.getHours();
-            
-            if (currentHour >= quizStartHour && currentHour < quizEndHour) {
-                // وقت المسابقة
-                showStartScreen();
-            } else {
-                // خارج وقت المسابقة
-                showOutOfTimeScreen();
-            }
-        }
+        
 
         // عرض شاشة خارج وقت المسابقة
         function showOutOfTimeScreen() {
@@ -788,7 +793,31 @@
             if (currentHour < quizStartHour) {
                 // قبل وقت المسابقة
                 const hoursRemaining = quizStartHour - currentHour;
-                elements.timeMessage.textContent = `المسابقة ستبدأ بعد ${hoursRemaining} ساعة`;
+                elements.timeMessage.textContent = `المسابقة ستبدأ بعد ${hour// التحقق من وقت المسابقة
+function checkQuizTime() {
+    const now = new Date();
+    const currentHour = now.getHours();
+    const currentMinute = now.getMinutes();
+    
+    // تحويل الوقت الحالي إلى دقائق
+    const currentTimeInMinutes = currentHour * 60 + currentMinute;
+    
+    // تحويل وقت بدء المسابقة إلى دقائق
+    const startTimeInMinutes = quizStartHour * 60 + quizStartMinute;
+    
+    // تحويل وقت انتهاء المسابقة إلى دقائق
+    const endTimeInMinutes = quizEndHour * 60 + quizEndMinute;
+    
+    if (currentTimeInMinutes >= startTimeInMinutes && currentTimeInMinutes < endTimeInMinutes) {
+        // وقت المسابقة
+        showStartScreen();
+    } else {
+        // خارج وقت المسابقة
+        showOutOfTimeScreen();
+    }
+}
+
+                                                                         sRemaining} ساعة`;
             } else {
                 // بعد وقت المسابقة
                 elements.timeMessage.textContent = 'المسابقة انتهت لليوم، عد غداً للمشاركة';
