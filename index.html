@@ -212,14 +212,32 @@
         </div>
     </div>
     <script>
-        // تهيئة Firebase
+           // تهيئة Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyC5RYK1lGaJaMQJmOH85cqNgv6m7rbLS_A",
             authDomain: "ramadanmotaz-5570f.firebaseapp.com",
             projectId: "ramadanmotaz-5570f",
             storageBucket: "ramadanmotaz-5570f.appspot.com",
-            mess// بنك الأسئلة
+            messagingSenderId: "595667154066",
+            appId: "1:595667154066:web:80ba616566ec55a5efe24b"
+        };
 
+        let db;
+        try {
+            if (!firebase.apps.length) {
+                firebase.initializeApp(firebaseConfig);
+            }
+            db = firebase.firestore();
+            console.log('Firebase initialized successfully');
+        } catch (error) {
+            console.error('Error initializing Firebase:', error);
+        }
+       
+
+
+
+                
+                // بنك الأسئلة
         const ramadanQuestions = {
 
             15: [ // اليوم 15 من رمضان
